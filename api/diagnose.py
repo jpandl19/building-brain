@@ -8,7 +8,7 @@ import openai
 import numpy as np
 import json
 from openai.embeddings_utils import distances_from_embeddings, cosine_similarity
-from util import query_vector_db
+from api.util import query_vector_db
 OPENAI_SECRET_KEY = os.getenv("OPENAI_SECRET_KEY", 'No secret key found')
 openai.api_key = OPENAI_SECRET_KEY
 
