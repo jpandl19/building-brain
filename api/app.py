@@ -477,8 +477,8 @@ def chat():
 def start_server():
     if (USE_SSL == 'True'):
         print("Using SSL")
-        app.run(debug=True, host="0.0.0.0", port=5001, ssl_context=(os.path.abspath('./ssl/localhost.crt'),
-                                                                    os.path.abspath('./ssl/localhost.key')))
+        app.run(debug=True, host="0.0.0.0", port=5001, ssl_context=(os.path.abspath('./api/ssl/localhost.crt'),
+                                                                    os.path.abspath('./api/ssl/localhost.key')))
     else:
         app.run(debug=True, host="0.0.0.0", port=5000)
 
