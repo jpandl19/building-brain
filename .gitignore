@@ -1,1 +1,5 @@
 api/__pycache__/app.cpython-310.pyc
+api/__pycache__/diagnose.cpython-310.pyc
+api/__pycache__/util.cpython-310.pyc
+api/db/__pycache__/BuildingBrainCustomFiles.cpython-310.pyc
+api/db/__pycache__/BuildingBrainUserMessageResponseAudit.cpython-310.pyc

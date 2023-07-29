@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
-from diagnose import answer_question
-from db.BuildingBrainCustomFiles import process_file, get_items_by_email, get_all_files, delete_file
-from db.BuildingBrainUserMessageResponseAudit import add_user_message, get_todays_records_for_email, get_latest_record_for_email, update_item_based_on_secondary_index
+from api.diagnose import answer_question
+from api.db.BuildingBrainCustomFiles import process_file, get_items_by_email, get_all_files, delete_file
+from api.db.BuildingBrainUserMessageResponseAudit import add_user_message, get_todays_records_for_email, get_latest_record_for_email, update_item_based_on_secondary_index
 from pydash import truncate
 from flask_cors import CORS
 from jose import jwt
@@ -89,7 +89,7 @@ def check_roles(user_roles, required_roles):
 
 
 def getPlatformCommonName(platformId):
-        return "BuildingBrain"
+    return "BuildingBrain"
 
 
 def convert_to_html_list(array):
@@ -446,7 +446,8 @@ def chat():
                     response, top_results = answer_question(question=user_message, model=selected_model,
                                                             platformId=platformId, max_response_length=max_response_length, use_vector_db=USE_VECTOR_DB, debug=False)
 
-                bot_response = response['choices'][0]['message']['content'].strip()
+                bot_response = response['choices'][0]['message']['content'].strip(
+                )
                 # now lets store the question and response for our own audit and product improvement purposes
                 # if(platformId == 0):
                 payload, response = add_user_message(user_email=user_email, platformId=platformId, user_message=user_message, metadata=create_metadata_object(
@@ -473,11 +474,14 @@ def chat():
             print(e)
             return jsonify(message='I apologize, an error occurred while I was thinking about your message. Please try again or contact our support at <a href=\"mailto:questions@pastorgpt.app\">questions@pastorgpt.app</a>.', error=e.args)
 
-
-if __name__ == '__main__':
+def start_server():
     if (USE_SSL == 'True'):
         print("Using SSL")
         app.run(debug=True, host="0.0.0.0", port=5001, ssl_context=(os.path.abspath('./ssl/localhost.crt'),
-                os.path.abspath('./ssl/localhost.key')))
+                                                                    os.path.abspath('./ssl/localhost.key')))
     else:
         app.run(debug=True, host="0.0.0.0", port=5000)
+
+
+if __name__ == '__main__':
+    start_server()
