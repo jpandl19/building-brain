@@ -6,6 +6,7 @@ import { useState } from 'react';
 import Login from './Login';
 import ChatInterface from './ChatInterfaceMui';
 import { useAuth0 } from "@auth0/auth0-react";
+import Files from './components/Files';
 import axios from 'axios';
 import { lp } from './lp';
 import Navigation from './components/Navigation';
@@ -164,6 +165,7 @@ function App() {
           <Stack spacing={2} direction="column">
             <Routes>
               <Route path="/" element={<ChatInterface />} />
+              <Route path="/Files" element={<Files />} />
               <Route path="/login" element={<Login />} />
             </Routes>
           </Stack>
