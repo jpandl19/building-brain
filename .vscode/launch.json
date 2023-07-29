@@ -17,8 +17,8 @@
             "name": "API Server",
             "type": "python",
             "request": "launch",
-            "program": "app.py",
-            "cwd": "${workspaceFolder}/api_starter.py",
+            "program": "app_starter.py",
+            "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "justMyCode": true
         },
