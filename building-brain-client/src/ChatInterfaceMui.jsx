@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import _ from 'lodash'
 import { Box, Button, Grid, TextField, Typography, Stack, CircularProgress, Divider, Accordion, AccordionSummary, AccordionDetails, useTheme, } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import InputBox from "./components/InputBox";
 import { getServiceGPTClient, getAccessToken } from './utils/ServiceGPTClient';
 import { extractPlatformId, getRolesFromToken, checkRoles } from './utils/utils'
 import ThumbUpOffAltOutlinedIcon from '@mui/icons-material/ThumbUpOffAltOutlined';
 import ThumbDownOutlinedIcon from '@mui/icons-material/ThumbDownOutlined';
+
+import OpenFileDialog from "./components/OpenFileDialog"
 const DEFAULT_RESPONSE_LENGTH = 1000;
 let messageEnd = null;
 
@@ -18,6 +21,7 @@ const ChatInterface = (props) => {
     const theme = useTheme()
 
 
+    const [openFile, setOpenFile] = React.useState();
     const [messages, setMessages] = useState([]);
     const [allowedToChat, setAllowedToChat] = useState(null);
     const [loadingResponse, setLoadingResponse] = useState(false);
@@ -188,6 +192,44 @@ const ChatInterface = (props) => {
         scrollToBottom();
     }, [messages]);
 
+    const renderFiles = (message) => {
+      return (<div style={{ display: "flex", flexDirection: "column", gap: "0.5em" }}>
+        <h4 style={{ marginBottom: "0em" }}>Manuals:</h4>
+        {message.hyperlinks?.map((h) => (
+          <Link onClick={() => {
+            setOpenFile(h)
+          }}>{h.text}</Link>
+        ))}
+      </div>)
+    }
+
+    const renderAssets = (message) => {
+      const keys = Object.keys(message.asset);
+
+      return (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5em",
+            minWidth: "20em",
+          }}
+        >
+          <h4 style={{ marginBottom: "0em" }}>Properties:</h4>
+          <Table>
+            <TableBody>
+              {keys.map((row, index) => (
+                <TableRow key={index}>
+                  <TableCell>{row}</TableCell>
+                  <TableCell>{message.asset[row]}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )
+    }
+
     const renderFeedbackButtons = (message) => {
 
         // is this the initial default message? then we don't need buttons
@@ -255,34 +297,35 @@ const ChatInterface = (props) => {
     );
 
     const renderInputField = () => (
-        <TextField
-            value={inputMessage}
-            onChange={e => setInputMessage(e.target.value)}
-            onKeyDown={e => {
-                if (e.key === 'Enter') sendMessage();
-            }}
-            disabled={loadingResponse}
-            sx={{
-                '& .MuiOutlinedInput-notchedOutline': {
-                    border: 'none',
-                },
-                '& .MuiOutlinedInput-input': {
-                    border: 'none',
-                    borderRadius: 25,
-                },
-                '& .MuiOutlinedInput-root input': {
-                    fontSize: `16px`,
-                },
-                input: {
-                    ...fontStyles,
-                    height: 36,
-                    fontSize: `16px`,
-                    backgroundColor: theme.palette.primary.contrastText
-                }
-            }}
-            variant='outlined'
-            fullWidth
-        />
+      <>test</>
+        // <TextField
+        //     value={inputMessage}
+        //     onChange={e => setInputMessage(e.target.value)}
+        //     onKeyDown={e => {
+        //         if (e.key === 'Enter') sendMessage();
+        //     }}
+        //     disabled={loadingResponse}
+        //     sx={{
+        //         '& .MuiOutlinedInput-notchedOutline': {
+        //             border: 'none',
+        //         },
+        //         '& .MuiOutlinedInput-input': {
+        //             border: 'none',
+        //             borderRadius: 25,
+        //         },
+        //         '& .MuiOutlinedInput-root input': {
+        //             fontSize: `16px`,
+        //         },
+        //         input: {
+        //             ...fontStyles,
+        //             height: 36,
+        //             fontSize: `16px`,
+        //             backgroundColor: theme.palette.primary.contrastText
+        //         }
+        //     }}
+        //     variant='outlined'
+        //     fullWidth
+        // />
 
     );
 
@@ -307,7 +350,6 @@ const ChatInterface = (props) => {
             </Grid>
         )
     }
-
 
     const renderReferences = (message) => {
         if (message == null || message.references == null || message.references?.length <= 0) return null;
@@ -419,6 +461,8 @@ const ChatInterface = (props) => {
                                         </Grid>
                                         {renderReferences(message)}
                                         {renderFeedbackButtons(message)}
+                                        {renderFiles(message)}
+                                        {renderAssets(message)}
                                     </Grid>
                                 </Box>
                             ))}
@@ -427,7 +471,23 @@ const ChatInterface = (props) => {
                             </div>
                         </Stack>
                     </Grid>
-                    <Grid
+
+                    <InputBox
+                      onMessageAdd={(myMessage, systemMessage) => {
+                        setMessages([
+                          ...messages,
+                          { text: myMessage, sender: "user" },
+                          {
+                            text: systemMessage.message,
+                            hyperlinks: systemMessage.hyperlinks,
+                            asset: systemMessage.asset,
+                            sender: "system",
+                          },
+                        ]);
+                      }}
+                    />
+
+                    {/* <Grid
                         item
                         container
                         alignItems='center'
@@ -447,9 +507,16 @@ const ChatInterface = (props) => {
                         <Grid item xs={3}>
                             {loadingResponse ? renderLoadingIndicator() : renderSendButton()}
                         </Grid>
-                    </Grid>
+                    </Grid> */}
+
+                 
                 </Grid>
             </Grid>
+            {openFile != null && (
+              <OpenFileDialog openFile={openFile} onFileClose={() => {
+                setOpenFile(null);
+              }}/>
+            )}
         </Grid>
     );
 };
