@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from api.diagnose import answer_question
 from api.db.BuildingBrainAssets import get_all_assets
-from api.db.BuildingBrainCustomFiles import process_file, get_items_by_email, get_all_files, delete_file
+from api.db.BuildingBrainCustomFiles import process_file, get_items_by_email, get_all_files, delete_file, create_presigned_url
 from api.db.BuildingBrainUserMessageResponseAudit import add_user_message, get_todays_records_for_email, get_latest_record_for_email, update_item_based_on_secondary_index
 from pydash import truncate
 from flask_cors import CORS
@@ -313,6 +313,18 @@ def health_check():
     return '{"healthcheck": "success"}'
 
 
+@app.route('/api/files/link/<fileId>', methods=['POST', 'GET', 'OPTIONS', 'DELETE'])
+@limiter.limit("1000 per minute", override_defaults=True)
+@cross_origin()
+def get_link(fileId):
+    url = create_presigned_url(fileId)
+    if url is None:
+        return jsonify({'error': 'Failed to generate presigned URL', url: None}), 500
+    else:
+        return jsonify({'message': f"link for {fileId} successfully retrieved.", 'url': url }), 200
+
+
+
 @app.route('/api/files', methods=['POST', 'GET', 'OPTIONS', 'DELETE'])
 @limiter.limit("1000 per minute", override_defaults=True)
 @cross_origin()
@@ -374,12 +386,14 @@ def getBuilding():
     # auth, roles = run_auth_checks(["free"])
     # // Get unit info from DynamoDB
     building_assets = get_all_assets()
-    if(building_assets == None):
+    if (building_assets == None):
         building_assets = []
 
     return jsonify(message="Successfully retrieved files", files=building_assets)
 
     return ""
+
+
 @app.route('/api/chat/feedback', methods=['GET', 'POST', 'OPTIONS'])
 @limiter.limit("100 per minute", override_defaults=True)
 @cross_origin()
@@ -487,6 +501,7 @@ def chat():
         except Exception as e:
             print(e)
             return jsonify(message='I apologize, an error occurred while I was thinking about your message. Please try again or contact our support at <a href=\"mailto:questions@pastorgpt.app\">questions@pastorgpt.app</a>.', error=e.args)
+
 
 def start_server():
     if (USE_SSL == 'True'):
