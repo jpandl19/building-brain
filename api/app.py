@@ -40,12 +40,6 @@ else:
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
-limiter = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=["200 per day", "25 per hour",
-                    "5 per minute", "1 per second"],
-)
 
 
 def create_metadata_object(response):
@@ -301,20 +295,16 @@ ROUTES AND API FUNCS
 
 
 @app.route("/")
-@limiter.limit("1 per second", override_defaults=True)
 def helloWorld():
     return '{message: "Hello from BuildingBrain", version: "0.0.1"}'
 
 
 @app.route("/health")
-@limiter.limit("1 per second", override_defaults=True)
 def health_check():
     return '{"healthcheck": "success"}'
 
 
 @app.route('/api/files', methods=['POST', 'GET', 'OPTIONS', 'DELETE'])
-@limiter.limit("1000 per minute", override_defaults=True)
-@cross_origin()
 def manage_files():
     auth, roles = run_auth_checks(["admin"])
     user_email = auth.get("payload", {}).get('email', 'no_email')
@@ -366,11 +356,15 @@ def manage_files():
     return jsonify(error='Invalid file type. Only .pdf and .txt files are allowed'), 400
 
 
+@app.route("/api/buildings", methods=["GET"])
+def getBuilding():
+    # // Get unit info from DynamoDB
+    return ""
+
+
 @app.route('/api/chat/feedback', methods=['GET', 'POST', 'OPTIONS'])
-@limiter.limit("100 per minute", override_defaults=True)
 @cross_origin()
 def chat_feedback():
-    auth, roles = run_auth_checks(["free"])
     if request.method == 'GET':
         return jsonify(message='the GET method is not supported for the feedback route yet')
 
@@ -391,97 +385,73 @@ def chat_feedback():
 
 
 @app.route('/api/chat', methods=['GET', 'POST', 'OPTIONS'])
-@limiter.limit("100 per minute", override_defaults=True)
 @cross_origin()
 def chat():
-    platformId = int(request.args.get('platformId', 0))
-    roles_to_check = ["free"]
-    # we're running our auth check universally, however the roles required for each platform may differ, so we ant to check that here
-    auth, roles = run_auth_checks(roles_to_check)
-
     if request.method == 'GET':
-        return jsonify(message='Hi Welcome to the FerryBuilding Central Brain')
-
-    platformId = int(request.json.get('platformId', 0))
+        return jsonify(message='Hi Welcome to the BuildingBrain')
 
     if request.method == 'POST':
         try:
-            auth_payload = auth.get("payload", {})
-            user_email = auth_payload.get('email', 'no_email')
-
-            # lets check whether the user has reached their message limit for the month (only enforce a limit for free users)
-            record_count = get_todays_records_for_email(user_email)
-
             user_message = request.json.get('message', '')
-            max_response_length = int(
-                request.json.get('max_response_length', 150))
+            return jsonify(message='Thank you for your message!')
+            # if ('echo:' in user_message):
+            #     bot_response = f"You said: {user_message}"
+            #     echo_test_id = str(uuid.uuid4())
+            #     return jsonify(message=bot_response, id=echo_test_id)
+            # else:
+            #     if (len(user_message) > MAX_QUERY_CHARACTER_LENGTH):
+            #         user_message = truncate(
+            #             user_message, MAX_QUERY_CHARACTER_LENGTH)
 
-            if (max_response_length >= TOTAL_MAX_RESPONSE_LENGTH):
-                max_response_length = TOTAL_MAX_RESPONSE_LENGTH
+            #     if (len(user_message) <= 0 or user_message == None):
+            #         bot_response = "I received an empty message there! Please send a message with more than 0 characters."
 
-            if ('echo:' in user_message):
-                bot_response = f"You said: {user_message}"
-                echo_test_id = str(uuid.uuid4())
-                return jsonify(message=bot_response, id=echo_test_id)
-            else:
-                if (len(user_message) > MAX_QUERY_CHARACTER_LENGTH):
-                    user_message = truncate(
-                        user_message, MAX_QUERY_CHARACTER_LENGTH)
+            #     selected_model = request.json.get('model', 'claude-2')
 
-                if (len(user_message) <= 0 or user_message == None):
-                    bot_response = "I received an empty message there! Please send a message with more than 0 characters."
+            #     bot_response = 'No response defined'
+            #     response = None
+            #     #  lets get the previous message the user sent, and use that as part of the context for the next message, so pastorgpt can remember the conversation
+            #     previous_message = get_latest_record_for_email(user_email)
+            #     # lets get the response from the chat model
 
-                selected_model = request.json.get('model', 'claude-2')
+            #     if (previous_message != None):
+            #         response, top_results = answer_question(question=user_message, model=selected_model,
+            #                                                 previous_message=previous_message, platformId=platformId, max_response_length=max_response_length, use_vector_db=USE_VECTOR_DB, debug=False)
+            #     else:
+            #         response, top_results = answer_question(question=user_message, model=selected_model,
+            #                                                 platformId=platformId, max_response_length=max_response_length, use_vector_db=USE_VECTOR_DB, debug=False)
 
-                bot_response = 'No response defined'
-                response = None
-                #  lets get the previous message the user sent, and use that as part of the context for the next message, so pastorgpt can remember the conversation
-                previous_message = get_latest_record_for_email(user_email)
-                # lets get the response from the chat model
+            #     bot_response = response['choices'][0]['message']['content'].strip(
+            #     )
+            #     # now lets store the question and response for our own audit and product improvement purposes
+            #     # if(platformId == 0):
+            #     payload, response = add_user_message(user_email=user_email, platformId=platformId, user_message=user_message, metadata=create_metadata_object(
+            #         response), message_response=bot_response, model_name=selected_model)
+            #     if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+            #         print(
+            #             f"User - question and model response was successfully added to the audit table")
+            #     else:
+            #         print("Error adding user message.")
 
-                if (previous_message != None):
-                    response, top_results = answer_question(question=user_message, model=selected_model,
-                                                            previous_message=previous_message, platformId=platformId, max_response_length=max_response_length, use_vector_db=USE_VECTOR_DB, debug=False)
-                else:
-                    response, top_results = answer_question(question=user_message, model=selected_model,
-                                                            platformId=platformId, max_response_length=max_response_length, use_vector_db=USE_VECTOR_DB, debug=False)
+            #     id = payload.get("id")
+            # references = []
+            # for result in top_results:
+            #     references.append({
+            #         "documentName": result['filename'],
+            #         "pageNumber": result['pageNumber'],
+            #         "paragraphNumber": result['paragraphNumber'],
+            #         "text": result['text'],
+            #     })
 
-                bot_response = response['choices'][0]['message']['content'].strip(
-                )
-                # now lets store the question and response for our own audit and product improvement purposes
-                # if(platformId == 0):
-                payload, response = add_user_message(user_email=user_email, platformId=platformId, user_message=user_message, metadata=create_metadata_object(
-                    response), message_response=bot_response, model_name=selected_model)
-                if response['ResponseMetadata']['HTTPStatusCode'] == 200:
-                    print(
-                        f"User {user_email} - question and model response was successfully added to the audit table")
-                else:
-                    print("Error adding user message.")
-
-                id = payload.get("id")
-            references = []
-            for result in top_results:
-                references.append({
-                    "documentName": result['filename'],
-                    "pageNumber": result['pageNumber'],
-                    "paragraphNumber": result['paragraphNumber'],
-                    "text": result['text'],
-                })
-
-            # lastly lets make sure to send the message to our slack audit channel, so we can easily see user interactions
-            return jsonify(message=bot_response, references=references, id=id)
+            # # lastly lets make sure to send the message to our slack audit channel, so we can easily see user interactions
+            # return jsonify(message=bot_response, references=references, id=id)
         except Exception as e:
             print(e)
             return jsonify(message='I apologize, an error occurred while I was thinking about your message. Please try again or contact our support at <a href=\"mailto:questions@pastorgpt.app\">questions@pastorgpt.app</a>.', error=e.args)
 
-def start_server():
-    if (USE_SSL == 'True'):
-        print("Using SSL")
-        app.run(debug=True, host="0.0.0.0", port=5001, ssl_context=(os.path.abspath('./ssl/localhost.crt'),
-                                                                    os.path.abspath('./ssl/localhost.key')))
-    else:
-        app.run(debug=True, host="0.0.0.0", port=5000)
 
+def start_server():
+    app.run(debug=True, host="0.0.0.0", port=5001)
 
 if __name__ == '__main__':
     start_server()

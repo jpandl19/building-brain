@@ -7,7 +7,7 @@ import { viteStaticCopy } from 'vite-plugin-static-copy'
 export default defineConfig(async ({ command, mode, ssrBuild }) => {
   let baseConfigObj = {
     preview: {
-      https: true,
+      https: false,
       host: '0.0.0.0',
       open: true,
       port: 3000,
@@ -21,7 +21,7 @@ export default defineConfig(async ({ command, mode, ssrBuild }) => {
     server: {
       port: 3000,
       host: '0.0.0.0',
-      https: true,
+      https: false,
       cors: true,
       open: 'localhost',
       strictPort: true,
@@ -81,7 +81,7 @@ export default defineConfig(async ({ command, mode, ssrBuild }) => {
       preview: {
         port: 3000,
         host: 'local.buildingbrain.com',
-        https: true,
+        https: false,
         cors: true,
         open: 'https://local.buildingbrain.com',
         strictPort: true,
@@ -89,7 +89,7 @@ export default defineConfig(async ({ command, mode, ssrBuild }) => {
       server: {
         port: 3000,
         host: 'local.buildingbrain.com',
-        https: true,
+        https: false,
         cors: true,
         open: 'https://local.buildingbrain.com',
         strictPort: true,

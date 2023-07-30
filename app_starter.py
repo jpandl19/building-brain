@@ -1,1 +1,3 @@
-from api import app
+from api.app import start_server;
+
+start_server()
