@@ -393,7 +393,10 @@ def chat():
     if request.method == 'POST':
         try:
             user_message = request.json.get('message', '')
-            return jsonify(message='Thank you for your message!')
+
+            
+
+            return jsonify(message= respondWithClaude2())
             # if ('echo:' in user_message):
             #     bot_response = f"You said: {user_message}"
             #     echo_test_id = str(uuid.uuid4())
@@ -449,6 +452,8 @@ def chat():
             print(e)
             return jsonify(message='I apologize, an error occurred while I was thinking about your message. Please try again or contact our support at <a href=\"mailto:questions@pastorgpt.app\">questions@pastorgpt.app</a>.', error=e.args)
 
+def respondWithClaude2(): 
+    # Do something great!
 
 def start_server():
     app.run(debug=True, host="0.0.0.0", port=5001)
