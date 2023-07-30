@@ -37,8 +37,6 @@ def get_s3_client():
                       aws_secret_access_key=aws_secret_access_key,
                       region_name=region_name
                       )
-    
-    s3 = boto3.client('s3')
     return s3
 
 
