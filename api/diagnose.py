@@ -182,7 +182,7 @@ def create_context(
 
         # Else add it to the text that is being returned
         returns.append(f"""
-            {building_asset_prompt.strip()}
+            {building_asset_prompt}
             
             [CONTEXT_BLOCK]
             context block: {i + 1}
