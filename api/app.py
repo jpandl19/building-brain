@@ -371,10 +371,13 @@ def manage_files():
 @limiter.limit("100 per minute", override_defaults=True)
 @cross_origin()
 def getBuilding():
-    auth, roles = run_auth_checks(["free"])
+    # auth, roles = run_auth_checks(["free"])
     # // Get unit info from DynamoDB
-    file_items = get_all_assets()
-    return jsonify(message="Successfully retrieved files", files=file_items)
+    building_assets = get_all_assets()
+    if(building_assets == None):
+        building_assets = []
+
+    return jsonify(message="Successfully retrieved files", files=building_assets)
 
     return ""
 @app.route('/api/chat/feedback', methods=['GET', 'POST', 'OPTIONS'])

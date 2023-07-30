@@ -4,16 +4,17 @@ from werkzeug.utils import secure_filename
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 import uuid
+import json
 import os
 # AWS credentials and region configuration
 aws_access_key_id = os.getenv("AWS_ACCESS_KEY_2")
 aws_secret_access_key = os.getenv("AWS_SECRET_KEY_2")
-region_name = os.getenv("AWS_REGION", 'us-east-2')
-BUCKET_NAME = os.getenv("BUCKET_NAME", 'dynamodbv2')
+region_name = os.getenv("AWS_REGION", 'us-east-1')
+BUCKET_NAME = os.getenv("BUCKET_NAME", 'building-brain-custom-files')
 
 
 
-TABLE_NAME = 'organizations'
+TABLE_NAME = 'BuildingBrainAssets'
 # Initialize a DynamoDB client
 dynamodb = boto3.resource(
     'dynamodb',
@@ -30,6 +31,16 @@ dynamodb = boto3.resource(
 #     region_name=region_name
 # )
 
+def insert_base_data(data): 
+    orgId = str(uuid.uuid4())
+    for item in data:
+        # Convert all keys in the item to camelCase
+        item = {(key.lower()): str(value) for key, value in item.items()}
+        # Add 'orgId' property to the item
+        item['orgId'] = orgId
+
+        # Put the item into the DynamoDB table
+        table.put_item(Item=item)
 
 def get_s3_client():
     # Please replace with your own credentials
@@ -234,3 +245,23 @@ def create_table():
             },
         ]
     )
+
+def load_and_insert_data(file_path="training/training_data/raw_building_data.json"):
+    try:
+        with open(file_path, 'r') as f:
+            data = json.load(f)
+            
+            # Check if data is a list and contains dictionaries
+            if isinstance(data, list) and all(isinstance(item, dict) for item in data):
+                    insert_base_data(data)
+            else:
+                print("Invalid data format. Expected a list of dictionaries.")
+    except FileNotFoundError:
+        print(f"{file_path} not found.")
+    except json.JSONDecodeError:
+        print(f"Error decoding JSON from {file_path}")
+
+if __name__ == '__main__':
+    pass;
+    # load_and_insert_data()
+    # create_table()
