@@ -494,6 +494,8 @@ def chat():
                     "documentName": result['filename'],
                     "pageNumber": result['pageNumber'],
                     "paragraphNumber": result['paragraphNumber'],
+                    "dynamodb_id": result["dynamodb_id"],
+                    "filename": result["filename"],
                     "text": result['text'],
                 })
 
