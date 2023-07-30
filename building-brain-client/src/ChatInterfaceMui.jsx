@@ -3,6 +3,8 @@ import _ from 'lodash'
 import { Box, Button, Grid, TextField, Typography, Stack, CircularProgress, Divider, Accordion, AccordionSummary, AccordionDetails, useTheme, } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import InputBox from "./components/InputBox";
+
+import {getFileLink} from "./utils/ServiceGPTClient";
 import { getServiceGPTClient, getAccessToken } from './utils/ServiceGPTClient';
 import { extractPlatformId, getRolesFromToken, checkRoles } from './utils/utils'
 import ThumbUpOffAltOutlinedIcon from '@mui/icons-material/ThumbUpOffAltOutlined';
@@ -354,36 +356,51 @@ const ChatInterface = (props) => {
     const renderReferences = (message) => {
         if (message == null || message.references == null || message.references?.length <= 0) return null;
 
-        const rendMessages = message.references.map((reference, index) => (
-            <Accordion key={index}>
-                <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
-                    aria-controls={`panel${index}b-content`}
-                    id={`panel${index}b-header`}
-                >
-                    <Grid container item xs={12} direction={`row`} alignSelf={`space-between`} justifyContent={`flex-start`}>
-                        {reference.documentName != null && (
-                            <Grid item xs={4}>
-                                <Typography sx={{ ...fontStyles }} variant={`body2`}>File: {reference.documentName}</Typography>
+        const rendMessages = message.references.map((reference, index) => {
+            
+            if (reference.dynamodb_id != null) {
+                <Link onClick={() => {
+                    // Get the link and navigate to it
+
+                    getFileLink(reference.dynamodb_id).then(res => {
+                        setOpenFile(res.data.url)
+                    })
+
+                    
+                }}>{h.text}</Link>
+            } else {
+                return (
+                    <Accordion key={index}>
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            aria-controls={`panel${index}b-content`}
+                            id={`panel${index}b-header`}
+                        >
+                            <Grid container item xs={12} direction={`row`} alignSelf={`space-between`} justifyContent={`flex-start`}>
+                                {reference.documentName != null && (
+                                    <Grid item xs={4}>
+                                        <Typography sx={{ ...fontStyles }} variant={`body2`}>File: {reference.documentName}</Typography>
+                                    </Grid>
+                                )}
+                                {reference.pageNumber != null && (
+                                    <Grid item xs={4}>
+                                        <Typography sx={{ ...fontStyles }} variant={`body2`}>Page: {reference.pageNumber}</Typography>
+                                    </Grid>
+                                )}
+                                {reference.paragraphNumber != null && (
+                                    <Grid item xs={4}>
+                                        <Typography sx={{ ...fontStyles }} variant={`body2`}>Paragraph: {reference.paragraphNumber}</Typography>
+                                    </Grid>
+                                )}
                             </Grid>
-                        )}
-                        {reference.pageNumber != null && (
-                            <Grid item xs={4}>
-                                <Typography sx={{ ...fontStyles }} variant={`body2`}>Page: {reference.pageNumber}</Typography>
-                            </Grid>
-                        )}
-                        {reference.paragraphNumber != null && (
-                            <Grid item xs={4}>
-                                <Typography sx={{ ...fontStyles }} variant={`body2`}>Paragraph: {reference.paragraphNumber}</Typography>
-                            </Grid>
-                        )}
-                    </Grid>
-                </AccordionSummary>
-                <AccordionDetails>
-                    <Typography sx={{ ...fontStyles }} variant={`body2`}>{reference.text}</Typography>
-                </AccordionDetails>
-            </Accordion>
-        ));
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <Typography sx={{ ...fontStyles }} variant={`body2`}>{reference.text}</Typography>
+                        </AccordionDetails>
+                    </Accordion>
+                )
+            }
+        }
 
         return (
             <Accordion>
