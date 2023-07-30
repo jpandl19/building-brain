@@ -197,7 +197,7 @@ const ChatInterface = (props) => {
         <h4 style={{ marginBottom: "0em" }}>Manuals:</h4>
         {message.hyperlinks?.map((h) => (
           <Link onClick={() => {
-            setOpenFile(h)
+            setOpenFile(h.url)
           }}>{h.text}</Link>
         ))}
       </div>)
