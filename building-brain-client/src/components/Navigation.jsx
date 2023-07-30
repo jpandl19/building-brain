@@ -31,9 +31,6 @@ const Navigation = ({ platformId, isAuthenticated, user, logout, onClose, }) => 
                 </ListItem>
                 <ListItem button onClick={() => navigate('/files')}>
                         <ListItemText primary="Files" />
-                        <ListItemSecondaryAction>
-                            <Chip label="New" color="primary" sx={{ backgroundColor: theme.palette.primary.main }} size="small" />
-                        </ListItemSecondaryAction>
                     </ListItem>
             </>
         );
