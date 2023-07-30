@@ -455,8 +455,54 @@ def chat():
             return jsonify(message='I apologize, an error occurred while I was thinking about your message. Please try again or contact our support at <a href=\"mailto:questions@pastorgpt.app\">questions@pastorgpt.app</a>.', error=e.args)
 
 
-def respondWithClaude2():
+def respondWithClaude2(user_message):
     # Do something great!
+
+    bot_response = 'No response defined'
+
+    response = None
+
+    selected_model = 'claude-2'
+
+    platformId = 0
+    
+    #  lets get the previous message the user sent, and use that as part of the context for the next message, so pastorgpt can remember the conversation
+    # previous_message = get_latest_record_for_email(user_email)
+    previous_message = None
+    # lets get the response from the chat model
+
+    if (previous_message != None):
+        response, top_results = answer_question(question=user_message, model=selected_model,
+                                                previous_message=previous_message, platformId=platformId, max_response_length=max_response_length, use_vector_db=USE_VECTOR_DB, debug=False)
+    else:
+        response, top_results = answer_question(question=user_message, model=selected_model,
+                                                platformId=platformId, max_response_length=max_response_length, use_vector_db=USE_VECTOR_DB, debug=False)
+
+    bot_response = response.completion.strip()
+    # now lets store the question and response for our own audit and product improvement purposes
+    # if(platformId == 0):
+    payload, response = add_user_message(user_email='test@test.com', platformId=platformId, user_message=user_message, metadata=create_metadata_object(
+        response), message_response=bot_response, model_name=selected_model)
+    if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+        print(
+            f"User 'test@test.com' - question and model response was successfully added to the audit table")
+    else:
+        print("Error adding user message.")
+
+    id = payload.get("id")
+
+            references = []
+            for result in top_results:
+                references.append({
+                    "documentName": result['filename'],
+                    "pageNumber": result['pageNumber'],
+                    "paragraphNumber": result['paragraphNumber'],
+                    "text": result['text'],
+                })
+
+            # lastly lets make sure to send the message to our slack audit channel, so we can easily see user interactions
+            return jsonify(message=bot_response, references=references[:15], id=id)
+
     return {
         "message": "Hello!",
         "hyperlinks": [

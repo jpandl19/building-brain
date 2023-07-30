@@ -29,11 +29,12 @@ const Navigation = ({ platformId, isAuthenticated, user, logout, onClose, }) => 
                 <ListItem button onClick={() => handleNavItemClick('/')}>
                     <ListItemText primary="Home" />
                 </ListItem>
-                {isAuthenticated && (
-                    <ListItem button onClick={() => logout({ logoutParams: { returnTo: window.location.origin, client_id: import.meta.env.VITE_AUTH0_CLIENT_ID } })}>
-                        <ListItemText primary="Logout" />
+                <ListItem button onClick={() => navigate('/files')}>
+                        <ListItemText primary="Files" />
+                        <ListItemSecondaryAction>
+                            <Chip label="New" color="primary" sx={{ backgroundColor: theme.palette.primary.main }} size="small" />
+                        </ListItemSecondaryAction>
                     </ListItem>
-                )}
             </>
         );
     };

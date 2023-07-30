@@ -119,14 +119,14 @@ werkzeug = "==2.2.3"
 wrapt = "==1.15.0"
 yarg = "==0.1.9"
 yarl = "==1.8.2"
-zenpy = "==2.0.25"
 slack-sdk = "*"
 html2markdown = "*"
 pypdf = "*"
 pdf2image = "*"
 pytesseract = "*"
 pinecone-client = "*"
-langchain = {extras = ["all"], version = "*"}
+anthropic = "*"
+langchain = "*"
 
 [dev-packages]
 
