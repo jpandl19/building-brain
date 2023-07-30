@@ -239,26 +239,6 @@ def answer_question(
             size=size,
         )
         pass
-    else:
-        # ensure we don't have any bad embeddings in our data
-        data_embeddings = df['embeddings'].values
-
-        index = 0
-        bad_indexes = []
-        for embedding in data_embeddings:
-            if (embedding == None or type(embedding) != type([])):
-                print('found bad embedding')
-                bad_indexes.append(index)
-            index += 1
-        # make sure to remove any bad embeddings that may have gotten into the data
-        data_embeddings = np.delete(data_embeddings, bad_indexes, axis=0)
-        context = create_context_legacy(
-            question,
-            df,
-            data_embeddings,
-            max_len=max_len,
-            size=size,
-        )
     # If debug, print the raw model response
     if debug:
         print("Context:\n" + context)

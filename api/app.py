@@ -410,7 +410,7 @@ def chat():
             user_email = auth_payload.get('email', 'no_email')
 
             # lets check whether the user has reached their message limit for the month (only enforce a limit for free users)
-            record_count = get_todays_records_for_email(user_email)
+            # record_count = get_todays_records_for_email(user_email)
 
             user_message = request.json.get('message', '')
             max_response_length = int(
@@ -436,7 +436,8 @@ def chat():
                 bot_response = 'No response defined'
                 response = None
                 #  lets get the previous message the user sent, and use that as part of the context for the next message, so pastorgpt can remember the conversation
-                previous_message = get_latest_record_for_email(user_email)
+                # previous_message = get_latest_record_for_email(user_email)
+                previous_message = None
                 # lets get the response from the chat model
 
                 if (previous_message != None):

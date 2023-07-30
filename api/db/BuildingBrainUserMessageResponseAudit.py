@@ -96,7 +96,7 @@ def get_todays_records_for_email(email):
 
     # Use a query operation with KeyConditionExpression
     response = table.query(
-        IndexName="userEmail-createdDate-index",
+        IndexName="userEmail-createdDate-idx",
         KeyConditionExpression="userEmail = :user_email AND begins_with(createdDate, :createdDate)",
         ExpressionAttributeValues={
             ":user_email": email,
@@ -114,7 +114,7 @@ def get_latest_record_for_email(email):
     table = dynamodb.Table(TABLE_NAME)
 
     response = table.query(
-        IndexName="userEmail-createdDate-index",
+        IndexName="userEmail-createdDate-idx",
         KeyConditionExpression="userEmail = :user_email",
         ExpressionAttributeValues={":user_email": email},
         ScanIndexForward=False,  # Sort results in descending order by createdDate
@@ -125,3 +125,50 @@ def get_latest_record_for_email(email):
         return response['Items'][0]
     else:
         return None
+
+def create_table():
+    # Create the DynamoDB table.
+    table = dynamodb.create_table(
+        TableName=TABLE_NAME,
+        KeySchema=[
+            {
+                'AttributeName': 'id',
+                'KeyType': 'HASH'
+            },
+        ],
+        AttributeDefinitions=[
+            {
+                'AttributeName': 'id',
+                'AttributeType': 'S'
+            },
+            {
+                'AttributeName': 'email',
+                'AttributeType': 'S'
+            },
+        ],
+        ProvisionedThroughput={
+            'ReadCapacityUnits': 5,
+            'WriteCapacityUnits': 5
+        },
+        GlobalSecondaryIndexes=[
+            {
+                'IndexName': 'userEmail-createdDate-idx',
+                'KeySchema': [
+                    {
+                        'AttributeName': 'email',
+                        'KeyType': 'HASH'
+                    },
+                ],
+                'Projection': {
+                    'ProjectionType': 'ALL',
+                },
+                'ProvisionedThroughput': {
+                    'ReadCapacityUnits': 5,
+                    'WriteCapacityUnits': 5,
+                }
+            },
+        ]
+    )
+
+if __name__ == '__main__':
+    create_table()
