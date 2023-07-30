@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from api.diagnose import answer_question
+from api.db.BuildingBrainAssets import get_all_assets
 from api.db.BuildingBrainCustomFiles import process_file, get_items_by_email, get_all_files, delete_file
 from api.db.BuildingBrainUserMessageResponseAudit import add_user_message, get_todays_records_for_email, get_latest_record_for_email, update_item_based_on_secondary_index
 from pydash import truncate
@@ -366,6 +367,16 @@ def manage_files():
     return jsonify(error='Invalid file type. Only .pdf and .txt files are allowed'), 400
 
 
+@app.route("/api/all_assets", methods=["GET"])
+@limiter.limit("100 per minute", override_defaults=True)
+@cross_origin()
+def getBuilding():
+    auth, roles = run_auth_checks(["free"])
+    # // Get unit info from DynamoDB
+    file_items = get_all_assets()
+    return jsonify(message="Successfully retrieved files", files=file_items)
+
+    return ""
 @app.route('/api/chat/feedback', methods=['GET', 'POST', 'OPTIONS'])
 @limiter.limit("100 per minute", override_defaults=True)
 @cross_origin()
