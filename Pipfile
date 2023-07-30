@@ -125,8 +125,8 @@ pypdf = "*"
 pdf2image = "*"
 pytesseract = "*"
 pinecone-client = "*"
-langchain = {extras = ["all"], version = "*"}
 anthropic = "*"
+langchain = "*"
 
 [dev-packages]
 
