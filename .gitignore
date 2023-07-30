@@ -10,3 +10,5 @@ api/__pycache__/AnthropicClient.cpython-310.pyc
 training/__pycache__/create_pinecone_embedding.cpython-310.pyc
 training/.DS_Store
 .DS_Store
+api/__pycache__/__init__.cpython-310.pyc
+api/db/__pycache__/BuildingBrainAssets.cpython-310.pyc

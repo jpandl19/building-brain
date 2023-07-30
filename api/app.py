@@ -365,7 +365,6 @@ def getBuilding():
 
     return ""
 
-
 @app.route('/api/chat/feedback', methods=['GET', 'POST', 'OPTIONS'])
 @cross_origin()
 def chat_feedback():
