@@ -385,7 +385,7 @@ const ChatInterface = (props) => {
                         <Typography sx={{ ...fontStyles }} variant={`body2`}>File: {reference.documentName}</Typography>
                       </Grid>
                       <Grid item sx={6}>
-                        <IconButton style={{ marginTop: -5}} variant={`outlined`} onClick={() => {
+                        <IconButton style={{ marginTop: -10}} variant={`outlined`} onClick={() => {
                           // Get the link and navigate to it
                           getFileLink(reference.dynamodb_id).then(res => {
                             setOpenFile(res.data.url)
