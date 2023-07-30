@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "addfad3760f738bd2624220fbb3ca411ee915ce99713379a6a251f87e67fa2fa"
+            "sha256": "37c7680877bb9f4b32b4f97505c8968cea547e38c4ee68a69f25a9aa68c04ff9"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -116,6 +116,14 @@
             ],
             "index": "pypi",
             "version": "==1.3.1"
+        },
+        "anthropic": {
+            "hashes": [
+                "sha256:45036a96f38598be82237c12d77d7aefe814a3bceb9da0bc6721a381c29821b1",
+                "sha256:6e644c84ad9375dc12e07b36aab1862ca4db98eb1750e08acfe4847e62afe0dd"
+            ],
+            "index": "pypi",
+            "version": "==0.3.6"
         },
         "anyio": {
             "hashes": [
@@ -560,12 +568,20 @@
             "markers": "python_version >= '3.7'",
             "version": "==0.3.7"
         },
+        "distro": {
+            "hashes": [
+                "sha256:02e111d1dc6a50abb8eed6bf31c3e48ed8b0830d1ea2a1b78c61765c2513fdd8",
+                "sha256:99522ca3e365cac527b44bde033f64c6945d90eb9f769703caaec52b09bbd3ff"
+            ],
+            "markers": "python_version >= '3.6'",
+            "version": "==1.8.0"
+        },
         "dnspython": {
             "hashes": [
                 "sha256:5b7488477388b8c0b70a8ce93b227c5603bc7b77f1565afe8e729c36c51447d7",
                 "sha256:c33971c79af5be968bb897e95c2448e11a645ee84d93b265ce0b7aabe5dfdca8"
             ],
-            "markers": "python_version >= '3.8' and python_version < '4.0'",
+            "markers": "python_version >= '3.8' and python_version < '4'",
             "version": "==2.4.1"
         },
         "docopt": {
@@ -792,6 +808,7 @@
                 "sha256:164cba9af4e6e4e40c3a4f90a1a6c12ee56f14c0b4868d1ca91b32826ab334ce",
                 "sha256:d61d1b40897407b574da67da1a833bdc10d5a11642566e506565d1b1a46ba873"
             ],
+            "markers": "python_version >= '3.6'",
             "version": "==2.22.0"
         },
         "google-auth-httplib2": {
@@ -965,9 +982,7 @@
             "version": "==0.22.0"
         },
         "httpx": {
-            "extras": [
-                "http2"
-            ],
+            "extras": [],
             "hashes": [
                 "sha256:06781eb9ac53cde990577af654bd990a4949de37a28bdb4a230d434f3a30b9bd",
                 "sha256:5853a43053df830c20f8110c5e69fe44d035d850b2dfe795e196f00fdb774bdd"
@@ -2469,7 +2484,7 @@
                 "sha256:b4c9ae193ad6d3e7add50944b86afa0d150bd821ab8ec21edb26d9a06b66f6a8",
                 "sha256:d5238825fe9a9340645fac3d75b287c08fbb99fb2b422477de781c9f5f09e019"
             ],
-            "markers": "python_version >= '3.6' and python_version < '4.0'",
+            "markers": "python_version >= '3.6' and python_version < '4'",
             "version": "==6.3.0"
         },
         "sniffio": {

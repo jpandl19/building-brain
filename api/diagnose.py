@@ -9,6 +9,10 @@ import numpy as np
 import json
 from openai.embeddings_utils import distances_from_embeddings, cosine_similarity
 from api.util import query_vector_db
+from api.AnthropicClient import query_anthropic_model
+from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
+
+
 OPENAI_SECRET_KEY = os.getenv("OPENAI_SECRET_KEY", 'No secret key found')
 openai.api_key = OPENAI_SECRET_KEY
 
@@ -140,19 +144,19 @@ def create_context(
         references_prompt = f"""
             [REFERENCE_BLOCK]
             page number {row['pageNumber']}
-            paragraph number: {row['paragraphNumber']}    
-            [/REFERENCE_BLOCK]    
+            paragraph number: {row['paragraphNumber']}
+            [/REFERENCE_BLOCK]
         """
         context_prompt = f"""
             [CONTEXT_BLOCK]
-            {row['text']}    
-            [/CONTEXT_BLOCK]    
+            {row['text']}
+            [/CONTEXT_BLOCK]
         """
 
         diagnostics_prompt = f"""
             [DIAGNOSTICS_BLOCK]
-                {diagnostics_data}  
-            [/DIAGNOSTICS_BLOCK]    
+                {diagnostics_data}
+            [/DIAGNOSTICS_BLOCK]
         """
         # Add the length of the text to the current length
         cur_len += row['tokens'] + 4 + \
@@ -246,17 +250,17 @@ def answer_question(
 
     try:
         init_messages = [
-            {"role": "system", "content": "You are an experienced AC Repair technician. It is now your job to help answer questions for new AC repair technicians.You can answer questions about the AC Repair, troubleshooting, startup and more."},
-            {"role": "user", "content": "What is an AC Condenser?"},
-            {"role": "assistant",
+            {"role": AI_PROMPT, "content": "You are an experienced AC Repair technician. It is now your job to help answer questions for new AC repair technicians.You can answer questions about the AC Repair, troubleshooting, startup and more."},
+            {"role": HUMAN_PROMPT, "content": "What is an AC Condenser?"},
+            {"role": AI_PROMPT,
              "content": f"A condenser (or AC condenser) is the outdoor portion of an air conditioner or heat pump that either releases or collects heat, depending on the time of the year."},
         ]
 
         if (previous_message != None):
             init_messages.append(
-                {"role": "user", "content": f"{previous_message.get('userMessage', 'No previous message found.')}"},)
+                {"role": HUMAN_PROMPT, "content": f"{previous_message.get('userMessage', 'No previous message found.')}"},)
             init_messages.append(
-                {"role": "assistant", "content": f"{previous_message.get('modelResponse', 'No previous model response found')}"},)
+                {"role": AI_PROMPT, "content": f"{previous_message.get('modelResponse', 'No previous model response found')}"},)
 
         # lets add the question and context to the init prompt
         init_messages.append(
@@ -289,23 +293,34 @@ def answer_question(
             f"Prompt + Context Token Count: {init_messages_token_count}")
 
         # Create a completions using the questin and context
-        response = openai.ChatCompletion.create(
-            messages=init_messages,
+        # response = openai.ChatCompletion.create(
+        #     messages=init_messages,
+        #     temperature=0,
+        #     max_tokens=max_tokens,
+        #     top_p=1,
+        #     frequency_penalty=0,
+        #     presence_penalty=0,
+        #     stop=stop_sequence,
+        #     model=model,
+        # )
+
+        # Call the query_anthropic_model function
+        response = query_anthropic_model(
+            prompt=init_messages,
+            # max_tokens_to_sample=max_tokens,
+            max_tokens_to_sample=40000,
             temperature=0,
-            max_tokens=max_tokens,
             top_p=1,
-            frequency_penalty=0,
             presence_penalty=0,
+            frequency_penalty=0,
             stop=stop_sequence,
-            model=model,
         )
+
         response_token_count = calculate_response_token_count(
             response['choices'][0]['message']['content'].strip())
         pretty_print(f"Response Token Count: {response_token_count}")
         pretty_print(
             f"Total Token Count: {init_messages_token_count + response_token_count}")
-
-
 
         return response, top_results
     except Exception as e:

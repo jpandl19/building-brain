@@ -36,7 +36,7 @@ OPENAI_SECRET_KEY = os.getenv("OPENAI_SECRET_KEY", 'No secret key found')
 PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", 'building-brain-custom-files')
 PINECONE_ENVIRONMENT = os.getenv("PINECONE_ENVIRONMENT", 'us-west1-gcp-free')
 DEFAULT_PINECONE_NAMESPACE = os.getenv(
-    "DEFAULT_PINECONE_NAMESPACE", 'building-brain-org-1')
+    "DEFAULT_PINECONE_NAMESPACE", 'building-brain-org-2')
 
 openai.api_key = OPENAI_SECRET_KEY
 
@@ -251,6 +251,36 @@ def create_embeddings_for_file(fileId, bucket_name=BUCKET_NAME, passed_index_nam
     return embeddings
 
 
+def get_files_in_directory(directory):
+    return [os.path.join(directory, f) for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
+
+def create_embeddings_for_all_documents_without_embeddings(directory=None):
+    if directory is None:
+        items = get_all_files()
+    else:
+        items = get_files_in_directory(directory)
+
+    for idx, item in enumerate(items):
+        try:
+            if (item.get('embedded') != False):
+                print(
+                    f"SKIPPING ITEM Item with ID: {item.get('id')} because it has already been processed")
+                continue
+            print("=====================================")
+            print(f"Processing item {idx + 1} of {len(items)}")
+            create_embeddings_for_file(
+                item.get('id'), BUCKET_NAME, PINECONE_INDEX_NAME)
+            print(f"Finished processing item {idx + 1} of {len(items)}")
+            print("=====================================")
+        except Exception as e:
+            print(
+                f"Exception occurred while processing item {idx + 1} of {len(items)}: {str(e)}")
+
+    print("=====================================")
+    print("=====================================")
+    print("Completed processing all items")
+
+
 def create_embeddings_for_all_documents_without_embeddings(userEmail=None):
     items = []
     if(userEmail == None):
@@ -280,6 +310,7 @@ def create_embeddings_for_all_documents_without_embeddings(userEmail=None):
 
 
 if __name__ == "__main__":
+    create_embeddings_for_all_documents_without_embeddings()
     pass
     # create_embeddings_for_all_documents_without_embeddings(
     #     "averyp@lionsoft.net")
