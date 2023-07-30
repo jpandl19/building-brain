@@ -441,8 +441,9 @@ def chat():
             # record_count = get_todays_records_for_email(user_email)
 
             user_message = request.json.get('message', '')
-            max_response_length = int(
-                request.json.get('max_response_length', 150))
+            # max_response_length = int(
+                # request.json.get('max_response_length', 150))
+            max_response_length = 5000
 
             if (max_response_length >= TOTAL_MAX_RESPONSE_LENGTH):
                 max_response_length = TOTAL_MAX_RESPONSE_LENGTH

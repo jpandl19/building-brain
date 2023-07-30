@@ -11,7 +11,7 @@ PINECONE_INDEX_NAME = os.getenv(
 PINECONE_ENVIRONMENT = os.getenv("PINECONE_ENVIRONMENT", 'us-west1-gcp-free')
 DEFAULT_PINECONE_NAMESPACE = os.getenv(
     "DEFAULT_PINECONE_NAMESPACE", 'building-brain-org-2')
-DEFAULT_TOP_K = 1000
+DEFAULT_TOP_K = 30
 openai.api_key = OPENAI_SECRET_KEY
 
 

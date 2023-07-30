@@ -26,7 +26,7 @@ openai.api_key = OPENAI_SECRET_KEY
 '''
 RECREATE_EMBEDDINGS = False
 
-MAX_CONTEXT_LENGTH_TOKENS = 25000
+MAX_CONTEXT_LENGTH_TOKENS = 80000
 MAX_RESPONSE_TOKENS = 40000
 ################################################################################
 
@@ -112,6 +112,10 @@ def split_into_many(text, max_tokens=MAX_CONTEXT_LENGTH_TOKENS):
 
     return chunks
 
+import re
+
+def strip_non_alphanumeric(s):
+    return re.sub(r'[^a-zA-Z0-9:,]', '', s)
 
 def create_context(
     question, max_len=MAX_CONTEXT_LENGTH_TOKENS, diagnostics_data="No Diagnostics Given", size="ada"
@@ -120,9 +124,10 @@ def create_context(
     Create a context for a question by finding the most similar context from the dataframe
     """
     # query our vectorDb for the question
-    sorted_references = query_vector_db(question)
     sorted_asset_data = query_vector_db(
-        question, namespace=BUILDING_LAYOUT_NAMESPACE)
+        question, namespace=BUILDING_LAYOUT_NAMESPACE,)
+    sorted_references = query_vector_db(question)
+    cur_len = 0
     returns = []
     building_asset_prompt = """"
             [BUILDING_BRAIN_BUILDING_DATA]
@@ -132,9 +137,14 @@ def create_context(
 
     """
     for i, row in enumerate(sorted_asset_data):
+        asset = strip_non_alphanumeric(row['asset'])
+        cur_len += calculate_prompt_token_count(asset)
+        # If the context is too long, break
+        if cur_len > max_len:
+            break
         building_asset_prompt += f"""
             [BUILDING_BRAIN_SYSTEM_AND_UNIT_DATA]
-            {row['asset']}
+            {asset}
             [/BUILDING_BRAIN_SYSTEM_AND_UNIT_DATA]
         """
 
@@ -142,7 +152,6 @@ def create_context(
             [/BUILDING_BRAIN_BUILDING_DATA]
     """
 
-    cur_len = 0
     # Sort by distance and add the text to the context until the context is too long
     for i, row in enumerate(sorted_references):
         references_prompt = f"""
@@ -188,6 +197,95 @@ def create_context(
     return "\n\n###\n\n".join(returns), sorted_references
 
 
+
+def create_asset_context(
+    question, max_len=MAX_CONTEXT_LENGTH_TOKENS, diagnostics_data="No Diagnostics Given", size="ada"
+):
+    """
+    Create a context for a question by finding the most similar context from the dataframe
+    """
+    # query our vectorDb for the question
+    sorted_asset_data = query_vector_db(
+        question, namespace=BUILDING_LAYOUT_NAMESPACE,)
+    sorted_references = query_vector_db(question)
+    cur_len = 0
+    returns = []
+    building_asset_prompt = """"
+            [BUILDING_BRAIN_BUILDING_DATA]
+            The information is this block defines the various systems (like air handlers) that are present in the building.
+            You should use this information to help you answer the question.
+            This information will inform you about the location of the various systems and units in the building, spatially.
+
+    """
+    for i, row in enumerate(sorted_asset_data):
+        asset = strip_non_alphanumeric(row['asset'])
+        cur_len += calculate_prompt_token_count(asset)
+        # If the context is too long, break
+        if cur_len > max_len:
+            break
+        building_asset_prompt += f"""
+            [BUILDING_BRAIN_SYSTEM_AND_UNIT_DATA]
+            {asset}
+            [/BUILDING_BRAIN_SYSTEM_AND_UNIT_DATA]
+        """
+
+    building_asset_prompt += """
+            [/BUILDING_BRAIN_BUILDING_DATA]
+    """
+
+    # Sort by distance and add the text to the context until the context is too long
+    for i, row in enumerate(sorted_references):
+        references_prompt = f"""
+            [REFERENCE_BLOCK]
+            page number {row['pageNumber']}
+            paragraph number: {row['paragraphNumber']}
+            [/REFERENCE_BLOCK]
+        """
+        context_prompt = f"""
+            [CONTEXT_BLOCK]
+            {row['text']}
+            [/CONTEXT_BLOCK]
+        """
+
+        diagnostics_prompt = f"""
+            [DIAGNOSTICS_BLOCK]
+                {diagnostics_data}
+            [/DIAGNOSTICS_BLOCK]
+        """
+        # Add the length of the text to the current length
+        cur_len += row['tokens'] + 4 + \
+            len(diagnostics_prompt) + \
+            len(references_prompt) + len(context_prompt)
+
+        # If the context is too long, break
+        if cur_len > max_len:
+            break
+
+        # Else add it to the text that is being returned
+        returns.append(f"""
+            
+            [CONTEXT_BLOCK]
+            context block: {i + 1}
+            {references_prompt.strip()}
+            {diagnostics_prompt.strip()}
+            {context_prompt.strip()}
+            [/CONTEXT_BLOCK]
+            """
+                       )
+
+   
+    
+    reference_prompt = "\n\n###\n\n".join(returns), sorted_references;
+
+    reference_prompt = f"""{building_asset_prompt.strip()}\n\n{reference_prompt}"""
+    total_prompt_tokens = calculate_prompt_token_count(reference_prompt)
+    print(f"Total prompt tokens: {total_prompt_tokens}")
+    return reference_prompt, sorted_references
+    # Return the context
+    # return reference_prompt, building_asset_prompt.strip()
+
+
+
 def convert_messages_to_anthropic_format(init_messages):
     prompt = []
     # Loop through the messages
@@ -223,7 +321,7 @@ def answer_question(
     top_results = []
     # only use the vector db if we are on the hvac platform
     if (use_vector_db == True):
-        context, top_results = create_context(
+        context, top_results = create_asset_context(
             question,
             max_len=max_len,
             size=size,
