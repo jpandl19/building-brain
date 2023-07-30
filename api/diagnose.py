@@ -113,18 +113,6 @@ def split_into_many(text, max_tokens=MAX_CONTEXT_LENGTH_TOKENS):
 
 
 
-def create_openai_embeddings(input):
-    try:
-        print(f"Creating Embedding for query")
-        embedding = openai.Embedding.create(
-            input=input, engine='text-embedding-ada-002')['data'][0]['embedding']
-        embeddings_index += 1
-        time.sleep(1)
-        return embedding
-    except Exception as e:
-        print(f"Error creating embedding for query")
-        print(e)
-
 
 def create_context(
     question, max_len=MAX_CONTEXT_LENGTH_TOKENS, diagnostics_data="No Diagnostics Given", size="ada"

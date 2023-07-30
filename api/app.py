@@ -469,7 +469,7 @@ def chat():
                 })
 
             # lastly lets make sure to send the message to our slack audit channel, so we can easily see user interactions
-            return jsonify(message=bot_response, references=references, id=id)
+            return jsonify(message=bot_response, references=references[:15], id=id)
         except Exception as e:
             print(e)
             return jsonify(message='I apologize, an error occurred while I was thinking about your message. Please try again or contact our support at <a href=\"mailto:questions@pastorgpt.app\">questions@pastorgpt.app</a>.', error=e.args)
