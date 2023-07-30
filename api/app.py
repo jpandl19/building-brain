@@ -447,8 +447,7 @@ def chat():
                     response, top_results = answer_question(question=user_message, model=selected_model,
                                                             platformId=platformId, max_response_length=max_response_length, use_vector_db=USE_VECTOR_DB, debug=False)
 
-                bot_response = response['choices'][0]['message']['content'].strip(
-                )
+                bot_response = response.completion.strip()
                 # now lets store the question and response for our own audit and product improvement purposes
                 # if(platformId == 0):
                 payload, response = add_user_message(user_email=user_email, platformId=platformId, user_message=user_message, metadata=create_metadata_object(

@@ -24,8 +24,8 @@ openai.api_key = OPENAI_SECRET_KEY
 '''
 RECREATE_EMBEDDINGS = False
 
-MAX_CONTEXT_LENGTH_TOKENS = 2000
-MAX_RESPONSE_TOKENS = 1000
+MAX_CONTEXT_LENGTH_TOKENS = 50000
+MAX_RESPONSE_TOKENS = 40000
 ################################################################################
 
 # Load the cl100k_base tokenizer which is designed to work with the ada-002 model
@@ -111,21 +111,18 @@ def split_into_many(text, max_tokens=MAX_CONTEXT_LENGTH_TOKENS):
     return chunks
 
 
-global embeddings_index
-embeddings_index = 0
 
 
 def create_openai_embeddings(input):
     try:
-        global embeddings_index
-        print(f"Creating Embedding for data row {embeddings_index + 1}")
+        print(f"Creating Embedding for query")
         embedding = openai.Embedding.create(
             input=input, engine='text-embedding-ada-002')['data'][0]['embedding']
         embeddings_index += 1
         time.sleep(1)
         return embedding
     except Exception as e:
-        print(f"Error creating embedding for data row {embeddings_index + 1}")
+        print(f"Error creating embedding for query")
         print(e)
 
 
@@ -182,39 +179,19 @@ def create_context(
     return "\n\n###\n\n".join(returns), sorted_results
 
 
-def create_context_legacy(
-    question, df, data_embeddings, max_len=MAX_CONTEXT_LENGTH_TOKENS, size="ada"
-):
-    """
-    Create a context for a question by finding the most similar context from the dataframe
-    """
+def convert_messages_to_anthropic_format(init_messages):
+    prompt = []
+    # Loop through the messages
+    for message in init_messages:
+        # Check the role of the message
+        if message['role'] == 'system':
+            prompt.append(message['content'])
+        elif message['role'] == 'user':
+            prompt.append(f"{HUMAN_PROMPT} {message['content']}")
+        elif message['role'] == 'assistant':
+            prompt.append(f"{AI_PROMPT} {message['content']}")
 
-    # Get the embeddings for the question
-    q_embeddings = openai.Embedding.create(
-        input=question, engine='text-embedding-ada-002')['data'][0]['embedding']
-
-    # Get the distances from the embeddings
-    df['distances'] = distances_from_embeddings(
-        q_embeddings, data_embeddings, distance_metric='cosine')
-
-    returns = []
-    cur_len = 0
-
-    # Sort by distance and add the text to the context until the context is too long
-    for i, row in df.sort_values('distances', ascending=True).iterrows():
-
-        # Add the length of the text to the current length
-        cur_len += row['n_tokens'] + 4
-
-        # If the context is too long, break
-        if cur_len > max_len:
-            break
-
-        # Else add it to the text that is being returned
-        returns.append(row["concat_text"])
-
-    # Return the context
-    return "\n\n###\n\n".join(returns)
+    return prompt
 
 
 def answer_question(
@@ -236,7 +213,7 @@ def answer_question(
     context = ""
     top_results = []
     # only use the vector db if we are on the hvac platform
-    if (use_vector_db == True and platformId == 1):
+    if (use_vector_db == True):
         context, top_results = create_context(
             question,
             max_len=max_len,
@@ -256,36 +233,20 @@ def answer_question(
              "content": f"A condenser (or AC condenser) is the outdoor portion of an air conditioner or heat pump that either releases or collects heat, depending on the time of the year."},
         ]
 
+
         if (previous_message != None):
             init_messages.append(
                 {"role": HUMAN_PROMPT, "content": f"{previous_message.get('userMessage', 'No previous message found.')}"},)
             init_messages.append(
                 {"role": AI_PROMPT, "content": f"{previous_message.get('modelResponse', 'No previous model response found')}"},)
 
+
+
         # lets add the question and context to the init prompt
         init_messages.append(
             # {"role": "user", "content": f"Given the context: {context}, can you answer the question: {question}. Please format your response as html. Include image sources if you find image sources in the context. Please ensure that the HTML is formatted such that the text is on the right, and the image, if any, is on the left in a two column layout. Your response can have a maximum limit of {max_response_length} words. However if a response that is shorter than {max_response_length} words is available, please return that response."}
-            {"role": "user", "content": f"Given the context: {context}, can you answer the question: {question}. Please format your response as HTML. Your response can have a maximum limit of {max_response_length} words. However if a response that is shorter than {max_response_length} words is available, please return that response."}
+            {"role": "user", "content": f"Given the context: {context}, can you answer the question: {question}. Please format your response as HTML. Your response can have a maximum limit of {max_response_length} words. However if a response that is shorter than {max_response_length} words is available, please return that response. {AI_PROMPT}"}
         )
-
-        #  if we have a zero platformId that means we should load in PastorGPT mode
-        if (platformId == 0):
-            init_messages = [
-                {"role": "system", "content": "You are an experienced scholar of the Bible. You can answer questions about the Bible and its contents and well as theorize on how the bible applies to everyday human life."},
-                {"role": "user", "content": "Tell me about Jesus Christ and his teachings."},
-                {"role": "assistant", "content": f"Jesus Christ, the central figure of Christianity, was born in Bethlehem to Mary and Joseph. He is believed to be both fully divine and fully human, the Son of God and the Messiah prophesied in the Old Testament. Jesus' teachings focused on love, forgiveness, and compassion, emphasizing the importance of humility, service to others, and the pursuit of righteousness. One interesting aspect of Jesus' life is his ability to perform miracles, which demonstrated his divine power and authority. Some of the most well-known miracles include turning water into wine at a wedding in Cana, feeding a large crowd with only a few loaves of bread and fish, walking on water, and healing the sick and disabled. These miracles not only showcased his divine nature but also served as a means to spread his message and teachings. Another fascinating aspect of Jesus' life is his interactions with various groups of people, such as the Pharisees, Sadducees, and tax collectors. He often challenged the religious and social norms of his time, advocating for the marginalized and downtrodden. Jesus' teachings and actions ultimately led to his crucifixion by the Roman authorities, but Christians believe that he rose from the dead three days later, conquering death and sin, and offering salvation to all who believe in him."},
-            ]
-
-            if (previous_message != None):
-                init_messages.append(
-                    {"role": "user", "content": f"{previous_message.get('userMessage', 'No previous message found.')}"},)
-                init_messages.append(
-                    {"role": "assistant", "content": f"{previous_message.get('modelResponse', 'No previous model response found')}"},)
-
-            # lets add the question and context to the init prompt
-            init_messages.append(
-                {"role": "user", "content": f"Given the context: {context}, can you answer the question: {question}. Please format your response as html. Your response can have a maximum limit of {max_response_length} words. However if a response that is shorter than {max_response_length} words is available, please return that response."}
-            )
 
         init_messages_token_count = calculate_prompt_token_count(init_messages)
 
@@ -304,6 +265,8 @@ def answer_question(
         #     model=model,
         # )
 
+        init_messages = convert_messages_to_anthropic_format(init_messages)
+
         # Call the query_anthropic_model function
         response = query_anthropic_model(
             prompt=init_messages,
@@ -313,11 +276,9 @@ def answer_question(
             top_p=1,
             presence_penalty=0,
             frequency_penalty=0,
-            stop=stop_sequence,
         )
 
-        response_token_count = calculate_response_token_count(
-            response['choices'][0]['message']['content'].strip())
+        response_token_count = calculate_response_token_count(response.completion.strip())
         pretty_print(f"Response Token Count: {response_token_count}")
         pretty_print(
             f"Total Token Count: {init_messages_token_count + response_token_count}")
