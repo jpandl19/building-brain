@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv, find_dotenv
 from langchain.memory import ChatMessageHistory
-from humanloop import Humanloop
+# from humanloop import Humanloop
 from api.diagnose import create_openai_embeddings
 import pinecone
 from .util import query_vector_db
@@ -19,7 +19,7 @@ HUMANLOOP_API_KEY = os.getenv("HUMANLOOP_API_KEY")
 
 PINECONEINDEX = pinecone.Index(PINECONE_INDEX_NAME)
 
-humanloop = Humanloop(api_key="hl_sk_8a767764cee87273c4d165bc7494862d763be42caf12b4a6")
+# humanloop = Humanloop(api_key="hl_sk_8a767764cee87273c4d165bc7494862d763be42caf12b4a6")
 
 def get_context_from_database(question):
     response = create_openai_embeddings(question)
@@ -38,11 +38,11 @@ while conversation_active:
     else:
         retrieved_context = get_context_from_database(user_prompt)
         user_prompt += "\n This context may be helpful to answer the question:" + retrieved_context
-        response = humanloop.chat_deployed(
-            project="BuildingBrain",
-            inputs={},
-            messages=[{ "role": "user", "content": user_prompt}],
-        )
+        # response = humanloop.chat_deployed(
+        #     project="BuildingBrain",
+        #     inputs={},
+        #     messages=[{ "role": "user", "content": user_prompt}],
+        # )
         answer = response.choices[0].message['content']
         print(answer)
         history.add_user_message(user_prompt), history.add_ai_message(answer)
