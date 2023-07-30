@@ -7,7 +7,8 @@
 # )  
 
 from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
-
+import os
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", 'No secret key found')
 
 
 # from langchain.schema import AIMessage, HumanMessage, SystemMessage  
@@ -21,7 +22,7 @@ def query_anthropic_model(prompt, max_tokens_to_sample=500, temperature=0, top_p
     elif not isinstance(prompt, str):
         raise ValueError("Prompt must be a string or a list/tuple of strings.")
 
-    anthropic = Anthropic()
+    anthropic = Anthropic(api_key=ANTHROPIC_API_KEY)
     completion = anthropic.completions.create(
         model="claude-2",
         max_tokens_to_sample=max_tokens_to_sample,

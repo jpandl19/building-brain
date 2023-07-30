@@ -5,6 +5,7 @@ import boto3
 from boto3.dynamodb.conditions import Key, Attr
 import uuid
 import os
+import json
 # AWS credentials and region configuration
 aws_access_key_id = os.getenv("AWS_ACCESS_KEY")
 aws_secret_access_key = os.getenv("AWS_SECRET_KEY")
@@ -34,8 +35,9 @@ def get_s3_client():
     s3 = boto3.client('s3',
                       aws_access_key_id=aws_access_key_id,
                       aws_secret_access_key=aws_secret_access_key,
+                      region_name=region_name
                       )
-
+    
     s3 = boto3.client('s3')
     return s3
 
@@ -43,6 +45,29 @@ def get_s3_client():
 s3 = get_s3_client()
 
 table = dynamodb.Table(TABLE_NAME)
+
+def create_presigned_url(object_name, bucket_name=BUCKET_NAME, expiration=3600):
+    """
+    Generate a presigned URL to share an S3 object
+
+    :param bucket_name: string
+    :param object_name: string
+    :param expiration: Time in seconds for the presigned URL to remain valid
+    :return: Presigned URL as string. If error, returns None.
+    """
+
+    # Generate a presigned URL for the S3 object
+    try:
+        response = s3.generate_presigned_url('get_object',
+                                              Params={'Bucket': bucket_name,
+                                                      'Key': object_name},
+                                              ExpiresIn=expiration)
+    except ClientError as e:
+        print(e)
+        return None
+
+    # The response contains the presigned URL
+    return response
 
 
 def process_file(file, filename, email, platformId):
@@ -100,7 +125,8 @@ def get_items_by_email(email):
     except ClientError as e:
         print(e.response['Error']['Message'])
         return None
-    
+
+
 def get_all_files():
     try:
         response = table.scan()
@@ -126,6 +152,7 @@ def update_filename(id, new_filename):
     except ClientError as e:
         print(e.response['Error']['Message'])
 
+
 def update_item_by_id(fileId, file_record):
     table.update_item(
         Key={
@@ -136,6 +163,7 @@ def update_item_by_id(fileId, file_record):
             ':val1': file_record['embedded']
         }
     )
+
 
 def delete_file(id):
     try:
@@ -189,6 +217,7 @@ def create_s3_bucket(bucket_name, passed_region_name=region_name):
     except ClientError as e:
         print(e.response['Error']['Message'])
 
+
 def create_table():
     # Create the DynamoDB table.
     table = dynamodb.create_table(
@@ -233,5 +262,9 @@ def create_table():
         ]
     )
 
+
 if __name__ == '__main__':
-    create_table()
+    pass
+    # create_table()
+    # make_bucket_files_public(BUCKET_NAME)
+    # create_presigned_url("00858c57-3215-428b-8f35-2c5aa556e05a")
