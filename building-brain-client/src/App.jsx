@@ -126,7 +126,7 @@ function App() {
 
 
   return (
-    <Box backgroundColor={theme.palette.primary.contrastText} sx={{ boxShadow: 3 }} height="100vh">
+    <Box backgroundColor={theme.palette.primary.contrastText} sx={{ boxShadow: 3 }} height="100vh" style={{backgroundColor: "#e4e3eb"}}>
       <AppBar position="static">
         <Toolbar sx={{ minHeight: `10vh`, boxShadow: '0 5px 5px -5px rgba(0, 0, 0, 0.5)'}}>
           <Grid container spacing={1} justifyContent="flex-start" alignItems="center" direction="row">

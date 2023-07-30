@@ -493,10 +493,10 @@ def chat():
                 references.append({
                     "documentName": result['filename'],
                     "pageNumber": result['pageNumber'],
+                    "dynamodb_id": result['dynamodb_id'],
                     "paragraphNumber": result['paragraphNumber'],
                     "text": result['text'],
                 })
-
             # lastly lets make sure to send the message to our slack audit channel, so we can easily see user interactions
             return jsonify(message=bot_response, references=references[:15], id=id)
         except Exception as e:

@@ -37,6 +37,14 @@ export const getFiles = ({onlyUserItems}) => {
     return client.get(`api/files?platformId=${staticPlatformId}&onlyUserItems=${onlyUserItems}`);
 }
 
+export const getFileLink = (fileId) => {
+    const staticPlatformId = parseInt(extractPlatformId(window.location.href));
+
+    const client = getServiceGPTClient(token);
+
+    return client.get(`api/files/link/${fileId}?platformId=${staticPlatformId}`);
+}
+
 export const deleteFile = async (fileId) => {
     try {
         const staticPlatformId = parseInt(extractPlatformId(window.location.href));
