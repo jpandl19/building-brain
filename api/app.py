@@ -454,6 +454,7 @@ def chat():
 
 def respondWithClaude2(): 
     # Do something great!
+    return
 
 def start_server():
     app.run(debug=True, host="0.0.0.0", port=5001)
