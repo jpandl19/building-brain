@@ -26,7 +26,7 @@ const InputBox = ({ onMessageAdd }: any) => {
             message: values.content,
           })
           .then((res) => {
-            onMessageAdd(values.content, res.data.message);
+            onMessageAdd(values.content, { ...res.data });
 
             resetForm();
           })

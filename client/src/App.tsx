@@ -9,6 +9,8 @@ import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 
+import { Box, Drawer, Stack } from "@mui/material";
+import ChatInterface from "./components/ChatInterface";
 import MainToolbar from "./components/MainToolbar";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -17,9 +19,25 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 function App() {
+  const [open, setOpen] = React.useState(false);
   return (
     <div className="App">
-      <MainToolbar />
+      <Box sx={{ boxShadow: 3 }} height="100vh">
+        <MainToolbar />
+
+        <Drawer
+          anchor="left"
+          open={open}
+          onClose={() => setOpen(false)}
+        ></Drawer>
+        <Box padding={0}>
+          <Stack spacing={1} direction="column">
+            <Stack spacing={2} direction="column">
+              <ChatInterface />
+            </Stack>
+          </Stack>
+        </Box>
+      </Box>
     </div>
   );
 }

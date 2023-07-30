@@ -32,7 +32,12 @@ const ChatInterface = () => {
           setMessages([
             ...messages,
             { text: myMessage, sender: "user" },
-            { text: systemMessage, sender: "system" },
+            {
+              text: systemMessage.message,
+              hyperlinks: systemMessage.hyperlinks,
+              asset: systemMessage.asset,
+              sender: "system",
+            },
           ] as any);
         }}
       />

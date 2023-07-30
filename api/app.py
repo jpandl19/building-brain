@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from api.diagnose import answer_question
+from api.db.BuildingBrainAssets import get_all_assets
 from api.db.BuildingBrainCustomFiles import process_file, get_items_by_email, get_all_files, delete_file
 from api.db.BuildingBrainUserMessageResponseAudit import add_user_message, get_todays_records_for_email, get_latest_record_for_email, update_item_based_on_secondary_index
 from pydash import truncate
@@ -356,9 +357,12 @@ def manage_files():
     return jsonify(error='Invalid file type. Only .pdf and .txt files are allowed'), 400
 
 
-@app.route("/api/buildings", methods=["GET"])
+@app.route("/api/all_assets", methods=["GET"])
 def getBuilding():
     # // Get unit info from DynamoDB
+    file_items = get_all_assets()
+    return jsonify(message="Successfully retrieved files", files=file_items)
+
     return ""
 
 
@@ -394,9 +398,7 @@ def chat():
         try:
             user_message = request.json.get('message', '')
 
-            
-
-            return jsonify(message= respondWithClaude2())
+            return respondWithClaude2()
             # if ('echo:' in user_message):
             #     bot_response = f"You said: {user_message}"
             #     echo_test_id = str(uuid.uuid4())
@@ -452,12 +454,23 @@ def chat():
             print(e)
             return jsonify(message='I apologize, an error occurred while I was thinking about your message. Please try again or contact our support at <a href=\"mailto:questions@pastorgpt.app\">questions@pastorgpt.app</a>.', error=e.args)
 
-def respondWithClaude2(): 
+
+def respondWithClaude2():
     # Do something great!
-    return
+    return {
+        "message": "Hello!",
+        "hyperlinks": [
+            {"href": "test", "text": "Line 30 on test.pdf"}
+        ],
+        "asset": {
+            "location": "Basement",
+        }
+    }
+
 
 def start_server():
     app.run(debug=True, host="0.0.0.0", port=5001)
+
 
 if __name__ == '__main__':
     start_server()
