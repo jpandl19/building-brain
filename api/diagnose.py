@@ -12,6 +12,8 @@ from api.util import query_vector_db
 from api.AnthropicClient import query_anthropic_model
 from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
 
+BUILDING_LAYOUT_NAMESPACE = os.getenv(
+    "BUILDING_LAYOUT_NAMESPACE", 'building-brain-building-asset-data')
 
 OPENAI_SECRET_KEY = os.getenv("OPENAI_SECRET_KEY", 'No secret key found')
 openai.api_key = OPENAI_SECRET_KEY
@@ -24,7 +26,7 @@ openai.api_key = OPENAI_SECRET_KEY
 '''
 RECREATE_EMBEDDINGS = False
 
-MAX_CONTEXT_LENGTH_TOKENS = 50000
+MAX_CONTEXT_LENGTH_TOKENS = 25000
 MAX_RESPONSE_TOKENS = 40000
 ################################################################################
 
@@ -111,9 +113,6 @@ def split_into_many(text, max_tokens=MAX_CONTEXT_LENGTH_TOKENS):
     return chunks
 
 
-
-
-
 def create_context(
     question, max_len=MAX_CONTEXT_LENGTH_TOKENS, diagnostics_data="No Diagnostics Given", size="ada"
 ):
@@ -121,11 +120,31 @@ def create_context(
     Create a context for a question by finding the most similar context from the dataframe
     """
     # query our vectorDb for the question
-    sorted_results = query_vector_db(question)
+    sorted_references = query_vector_db(question)
+    sorted_asset_data = query_vector_db(
+        question, namespace=BUILDING_LAYOUT_NAMESPACE)
     returns = []
+    building_asset_prompt = """"
+            [BUILDING_BRAIN_BUILDING_DATA]
+            The information is this block defines the various systems (like air handlers) that are present in the building.
+            You should use this information to help you answer the question.
+            This information will inform you about the location of the various systems and units in the building, spatially.
+
+    """
+    for i, row in enumerate(sorted_asset_data):
+        building_asset_prompt += f"""
+            [BUILDING_BRAIN_SYSTEM_AND_UNIT_DATA]
+            {row['asset']}
+            [/BUILDING_BRAIN_SYSTEM_AND_UNIT_DATA]
+        """
+
+    building_asset_prompt += """
+            [/BUILDING_BRAIN_BUILDING_DATA]
+    """
+
     cur_len = 0
     # Sort by distance and add the text to the context until the context is too long
-    for i, row in enumerate(sorted_results):
+    for i, row in enumerate(sorted_references):
         references_prompt = f"""
             [REFERENCE_BLOCK]
             page number {row['pageNumber']}
@@ -154,6 +173,8 @@ def create_context(
 
         # Else add it to the text that is being returned
         returns.append(f"""
+            {building_asset_prompt.strip()}
+            
             [CONTEXT_BLOCK]
             context block: {i + 1}
             {references_prompt.strip()}
@@ -164,7 +185,7 @@ def create_context(
                        )
 
     # Return the context
-    return "\n\n###\n\n".join(returns), sorted_results
+    return "\n\n###\n\n".join(returns), sorted_references
 
 
 def convert_messages_to_anthropic_format(init_messages):
@@ -223,14 +244,11 @@ def answer_question(
              "content": f"A condenser (or AC condenser) is the outdoor portion of an air conditioner or heat pump that either releases or collects heat, depending on the time of the year."},
         ]
 
-
         if (previous_message != None):
             init_messages.append(
                 {"role": HUMAN_PROMPT, "content": f"{previous_message.get('userMessage', 'No previous message found.')}"},)
             init_messages.append(
                 {"role": AI_PROMPT, "content": f"{previous_message.get('modelResponse', 'No previous model response found')}"},)
-
-
 
         # lets add the question and context to the init prompt
         init_messages.append(
@@ -268,7 +286,8 @@ def answer_question(
             frequency_penalty=0,
         )
 
-        response_token_count = calculate_response_token_count(response.completion.strip())
+        response_token_count = calculate_response_token_count(
+            response.completion.strip())
         pretty_print(f"Response Token Count: {response_token_count}")
         pretty_print(
             f"Total Token Count: {init_messages_token_count + response_token_count}")

@@ -1,0 +1,3 @@
+from training.create_pinecone_embedding import create_embeddings_for_assets
+
+create_embeddings_for_assets()

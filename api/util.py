@@ -6,15 +6,16 @@ import time
 BUCKET_NAME = os.getenv("BUCKET_NAME", 'building-brain-custom-files')
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY", 'No secret key found')
 OPENAI_SECRET_KEY = os.getenv("OPENAI_SECRET_KEY", 'No secret key found')
-PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", 'building-brain-custom-files')
+PINECONE_INDEX_NAME = os.getenv(
+    "PINECONE_INDEX_NAME", 'building-brain-custom-files')
 PINECONE_ENVIRONMENT = os.getenv("PINECONE_ENVIRONMENT", 'us-west1-gcp-free')
-DEFAULT_PINECONE_NAMESPACE = os.getenv("DEFAULT_PINECONE_NAMESPACE", 'building-brain-org-2')
+DEFAULT_PINECONE_NAMESPACE = os.getenv(
+    "DEFAULT_PINECONE_NAMESPACE", 'building-brain-org-2')
 DEFAULT_TOP_K = 1000
 openai.api_key = OPENAI_SECRET_KEY
 
 
-
-def query_vector_db(query, index_name=PINECONE_INDEX_NAME, environment=PINECONE_ENVIRONMENT, namespace=DEFAULT_PINECONE_NAMESPACE):
+def query_vector_db(query, index_name=PINECONE_INDEX_NAME, environment=PINECONE_ENVIRONMENT, namespace=DEFAULT_PINECONE_NAMESPACE, ):
     # Initialize the Pinecone client
     pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENVIRONMENT)
 
@@ -36,7 +37,9 @@ def query_vector_db(query, index_name=PINECONE_INDEX_NAME, environment=PINECONE_
     formatted_results = []
     matches = results.get('matches', [])
     for result in matches:
-        formattted_result = format_pinecone_response(result)
+        formattted_result = None
+        formattted_result = format_pinecone_response(result, namespace)
+
         formatted_results.append(formattted_result)
 
     # Sort the results by the 'score' key in descending order
@@ -56,16 +59,27 @@ def delete_vectors(ids, index_name):
     # Delete all vectors
     index.delete(ids=ids)
 
-def format_pinecone_response(result):
-    formatted_result = {
-        "score": result["score"],
-        'tokens': result["metadata"].get("tokens", 0),
-        "text": result["metadata"].get("text", "No Text Found. Corrupted Embedding."),
-        'filename': result["metadata"].get("filename", "No Name Found. Corrupted Embedding."),
-        'dynamodb_id': result["metadata"].get("dynamodb_id", "No DynamoID Found. Corrupted Embedding."),
-        "pageNumber": result["metadata"].get("page_number", "No page number Found. Corrupted Embedding."),
-        "paragraphNumber": result["metadata"].get("paragraph_number", "No paragraph number Found. Corrupted Embedding."),
-    }
+
+def format_pinecone_response(result, namespace):
+    formatted_result = {}
+
+    if(namespace == DEFAULT_PINECONE_NAMESPACE):
+        formatted_result = {
+            "score": result["score"],
+            'tokens': result["metadata"].get("tokens", 0),
+            "text": result["metadata"].get("text", "No Text Found. Corrupted Embedding."),
+            'filename': result["metadata"].get("filename", "No Name Found. Corrupted Embedding."),
+            'dynamodb_id': result["metadata"].get("dynamodb_id", "No DynamoID Found. Corrupted Embedding."),
+            "pageNumber": result["metadata"].get("page_number", "No page number Found. Corrupted Embedding."),
+            "paragraphNumber": result["metadata"].get("paragraph_number", "No paragraph number Found. Corrupted Embedding."),
+        }
+    else:
+        formatted_result = {
+            "score": result["score"],
+            "asset": result["metadata"]["asset"],
+        }
+
+
     return formatted_result
 
 

@@ -35,8 +35,13 @@ PINECONE_API_KEY = os.getenv("PINECONE_API_KEY", 'No secret key found')
 OPENAI_SECRET_KEY = os.getenv("OPENAI_SECRET_KEY", 'No secret key found')
 PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", 'building-brain-custom-files')
 PINECONE_ENVIRONMENT = os.getenv("PINECONE_ENVIRONMENT", 'us-west1-gcp-free')
-DEFAULT_PINECONE_NAMESPACE = os.getenv(
-    "DEFAULT_PINECONE_NAMESPACE", 'building-brain-org-2')
+DEFAULT_PINECONE_NAMESPACE = os.getenv("DEFAULT_PINECONE_NAMESPACE", 'building-brain-org-2')
+BUILDING_LAYOUT_NAMESPACE = os.getenv("BUILDING_LAYOUT_NAMESPACE", 'building-brain-building-asset-data')
+
+aws_access_key_id = os.getenv("AWS_ACCESS_KEY_2")
+aws_secret_access_key = os.getenv("AWS_SECRET_KEY_2")
+region_name = os.getenv("AWS_REGION", 'us-east-1')
+BUCKET_NAME = os.getenv("BUCKET_NAME", 'building-brain-custom-files')
 
 openai.api_key = OPENAI_SECRET_KEY
 
@@ -309,8 +314,75 @@ def create_embeddings_for_all_documents_without_embeddings(userEmail=None):
     print("Completed processing all items")
 
 
+def create_embeddings_for_assets(passed_index_name=PINECONE_INDEX_NAME):
+    # Initialize the Pinecone client
+    pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENVIRONMENT)
+
+    # Specify the name of your Pinecone index
+    index_name = passed_index_name
+
+    # get the index
+    index = None
+    # Create the index if it doesn't exist
+    if index_name not in pinecone.list_indexes():
+        pinecone.create_index(
+            name=index_name, dimension=1536, metric="cosine", shards=1)
+        index = pinecone.Index(index_name)
+    else:
+        index = pinecone.Index(index_name)
+
+    # Initialize a DynamoDB client
+    dynamodb = boto3.resource(
+        'dynamodb',
+        aws_access_key_id=aws_access_key_id,
+        aws_secret_access_key=aws_secret_access_key,
+        region_name=region_name
+    )
+
+    # Get the "BuildingBrainAssets" table
+    table = dynamodb.Table('BuildingBrainAssets')
+
+    # Get all items from the table
+    response = table.scan()
+    assets = response['Items']
+
+    # Define the filename with the current date time stamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"embeddings_{timestamp}.json"
+
+    # Loop over each asset in the table
+    for asset in assets:
+        print("====================================")
+        print(f"Processing asset with ID: {asset['id']}")
+
+        # Convert the asset to a JSON string
+        asset_str = json.dumps(asset)
+
+        print("Creating embedding for the asset...")
+        # Create an embedding for the asset string
+        embedding = create_openai_embeddings(asset_str)
+        embeddingId = str(uuid.uuid4())
+        print("Embedding created successfully.")
+
+        print("Upserting the embedding into Pinecone...")
+        # Upsert the embedding into Pinecone
+        upsert_data = [(str(embeddingId), embedding,
+                        {'assetId': asset['id'], 'asset': asset_str})]
+        index.upsert(upsert_data, namespace=BUILDING_LAYOUT_NAMESPACE)
+        print("Embedding upserted into Pinecone successfully.")
+        print("====================================")
+
+    print("====================================")
+    print("done with training")
+    print("====================================")
+
+
+
+
 if __name__ == "__main__":
-    create_embeddings_for_all_documents_without_embeddings()
+    create_embeddings_for_assets()
+    # create_embeddings_for_all_documents_without_embeddings()
+    # create_embeddings_for_json_file()
     pass
     # create_embeddings_for_all_documents_without_embeddings(
     #     "averyp@lionsoft.net")
