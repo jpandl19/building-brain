@@ -357,17 +357,15 @@ const ChatInterface = (props) => {
         if (message == null || message.references == null || message.references?.length <= 0) return null;
 
         const rendMessages = message.references.map((reference, index) => {
-            
+        
             if (reference.dynamodb_id != null) {
-                <Link onClick={() => {
+                return (<Link onClick={() => {
                     // Get the link and navigate to it
 
                     getFileLink(reference.dynamodb_id).then(res => {
                         setOpenFile(res.data.url)
-                    })
-
-                    
-                }}>{h.text}</Link>
+                    });
+                }}>{h.text}</Link>)
             } else {
                 return (
                     <Accordion key={index}>
@@ -400,7 +398,7 @@ const ChatInterface = (props) => {
                     </Accordion>
                 )
             }
-        }
+        });
 
         return (
             <Accordion>
